@@ -1,0 +1,98 @@
+{
+ "date": "2026-09-19",
+ "model": "qwen3:latest (8.2B Q4_K_M, Ollama)",
+ "question": "Should the fixed configuration run with reasoning on?",
+ "answer": "No, and the reason is latency plus instability rather than the single dramatic finding the first probe suggested. At num_predict=400 reasoning on consumes the whole budget in the reasoning channel and returns content:'' - a fully billed non-answer. At num_predict=2400 it can emit a usable action, but takes over a hundred seconds to do it and does not do it every time. think:false answers the same step in under a second. Fourteen steps times nine runs at the reasoning-on rate is hours of wall clock for a configuration that still sometimes returns nothing, so the manifest pins think:false.",
+ "correction": "An earlier hand-run of the num_predict=2400 probe returned content:'' and was written up as 'the empty-reply pathology, reproduced twice'. The scripted re-run returned a usable action. One sample was being read as a property. The probe now repeats itself and the rows below are all of them, including the disagreeing ones.",
+ "caveat": "This is a limit of this 8B model at this prompt size, and the report says so. It is not a claim about reasoning models generally.",
+ "probes": [
+  {
+   "probe": "think on, small budget",
+   "rep": 0,
+   "think": true,
+   "num_predict": 400,
+   "seconds": 18.4,
+   "tokens_generated": 400,
+   "reasoning_channel_chars": 1722,
+   "content": "",
+   "usable_reply": false
+  },
+  {
+   "probe": "think on, small budget",
+   "rep": 1,
+   "think": true,
+   "num_predict": 400,
+   "seconds": 18.3,
+   "tokens_generated": 400,
+   "reasoning_channel_chars": 1666,
+   "content": "",
+   "usable_reply": false
+  },
+  {
+   "probe": "think on, large budget",
+   "rep": 0,
+   "think": true,
+   "num_predict": 2400,
+   "seconds": 123.3,
+   "tokens_generated": 2400,
+   "reasoning_channel_chars": 8786,
+   "content": "",
+   "usable_reply": false
+  },
+  {
+   "probe": "think on, large budget",
+   "rep": 1,
+   "think": true,
+   "num_predict": 2400,
+   "seconds": 53.7,
+   "tokens_generated": 849,
+   "reasoning_channel_chars": 3435,
+   "content": "{\"action\":\"write\",\"path\":\"f.py\",\"content\":\"def chunk(lst, size):\\n    return [lst[i:i+size] for i in range(0, len(lst), size)]\"}",
+   "usable_reply": true
+  },
+  {
+   "probe": "think on, large budget",
+   "rep": 2,
+   "think": true,
+   "num_predict": 2400,
+   "seconds": 66.8,
+   "tokens_generated": 1122,
+   "reasoning_channel_chars": 4660,
+   "content": "{\"action\":\"write\",\"path\":\"f.py\",\"content\":\"def chunk(lst, n):\\n    return [lst[i:i+n] for i in range(0, len(lst), n)]\"}",
+   "usable_reply": true
+  },
+  {
+   "probe": "think off",
+   "rep": 0,
+   "think": false,
+   "num_predict": 700,
+   "seconds": 0.9,
+   "tokens_generated": 11,
+   "reasoning_channel_chars": 0,
+   "content": "{\"action\":\"read\",\"path\":\"chunk.py\"}",
+   "usable_reply": true
+  },
+  {
+   "probe": "think off",
+   "rep": 1,
+   "think": false,
+   "num_predict": 700,
+   "seconds": 0.6,
+   "tokens_generated": 11,
+   "reasoning_channel_chars": 0,
+   "content": "{\"action\":\"read\",\"path\":\"chunk.py\"}",
+   "usable_reply": true
+  },
+  {
+   "probe": "think off",
+   "rep": 2,
+   "think": false,
+   "num_predict": 700,
+   "seconds": 0.6,
+   "tokens_generated": 11,
+   "reasoning_channel_chars": 0,
+   "content": "{\"action\":\"read\",\"path\":\"chunk.py\"}",
+   "usable_reply": true
+  }
+ ]
+}

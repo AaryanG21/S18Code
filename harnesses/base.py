@@ -51,6 +51,14 @@ class TaskRun:
     calls: int = 0
     unusable_replies: int = 0
 
+    # Real token counts from the provider, not a proxy. `tokens` above is a
+    # reply-character estimate whose own docstring forbids publishing it as a
+    # cost figure, and Part 3 of this evaluation has to report cost. Ollama
+    # returns prompt_eval_count/eval_count per call; these accumulate them.
+    # Defaulted, so journals written before this field existed still load.
+    prompt_tokens: int = 0
+    output_tokens: int = 0
+
     # Deliberately absent: whether it actually passed. That is the graders' job,
     # computed from the task's own tests, never from the agent's report. Keeping
     # the claim and the truth in separate fields is the whole point: their
