@@ -1,4 +1,4 @@
-# Reproduction, 2026-09-20
+# Reproduction A, 2026-09-20
 
 The same manifest, re-run from a clean clone with the journals deleted first. Kept because
 it disagrees with the first set in one place, and an evaluation that only publishes the run
@@ -16,3 +16,7 @@ that matched its write-up is not publishing a result.
 
 The `false_success` on `e01` r1 in the first set did not recur. The scoring change did, and
 moved one more row.
+
+
+A third set was run on 2026-09-20 and is in `proofs/reproduction_20260920b/`, with a
+three-way comparison table. `verified` under v1 took a third distinct value there.
