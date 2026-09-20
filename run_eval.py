@@ -71,7 +71,16 @@ def snapshot(ws: pathlib.Path) -> dict:
 async def main() -> int:
     tasks = {json.loads(p.read_text())["id"]: json.loads(p.read_text())
              for p in (HERE / "tasks").glob("e0*.json")}
-    order = [a for a in sys.argv[1:] if a in tasks] or ORDER
+    # Upstream filters argv against the task set and falls back to the full
+    # order, so a typo'd task id silently runs everything - minutes of model
+    # time and nine overwritten journals in answer to a question nobody asked.
+    requested = sys.argv[1:]
+    unknown = [a for a in requested if a not in tasks]
+    if unknown:
+        print(f"error: unknown task id(s): {', '.join(unknown)}", file=sys.stderr)
+        print(f"       known: {', '.join(sorted(tasks))}", file=sys.stderr)
+        return 2
+    order = requested or ORDER
     reps = CFG["repeats"]
     raw_dir = HERE / "proofs" / "runs_eval"
     raw_dir.mkdir(parents=True, exist_ok=True)

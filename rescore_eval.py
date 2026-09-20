@@ -42,8 +42,21 @@ def main() -> int:
     ap.add_argument("--runs", default="proofs/runs_eval")
     a = ap.parse_args()
 
+    run_dir = HERE / a.runs
+    journals = sorted(run_dir.glob("*.json"))
+    if not journals:
+        # Refusing here rather than writing {"rows": []} and exiting 0. An empty
+        # results file is indistinguishable from a real one at a glance, it
+        # overwrites the previous good one, and every count in it reads 0/0 -
+        # which is exactly the "looks like a result, is not one" artifact this
+        # repository keeps two examples of on purpose. Found by running the
+        # rescorer against a directory that did not exist.
+        print(f"error: no journals in {run_dir}", file=sys.stderr)
+        print("       run `python3 run_eval.py` first, or pass --runs <dir>", file=sys.stderr)
+        return 2
+
     rows = []
-    for f in sorted((HERE / a.runs).glob("*.json")):
+    for f in journals:
         run, passed, unavailable, kind, rep = load(f)
         row = score(run, actually_passed=passed, unavailable=unavailable, version=a.scorer)
         row["kind"], row["rep"], row["journal"] = kind, rep, f.name

@@ -28,18 +28,22 @@ python3 -m pip install pytest
 git clone -b s18-eval-fork https://github.com/AaryanG21/S18Code.git
 cd S18Code
 
-# 2. set every task label by execution, not by argument (10 attacks, ~2s)
+# 2. the scorer's own tests. Every case in here is one the nine runs never
+#    produced, and three of them were failing when first written.
+python3 -m pytest attacks/test_axes.py -q
+
+# 3. set every task label by execution, not by argument (10 attacks, ~2s)
 python3 attacks/run_attacks.py
 
-# 3. justify the fixed configuration by measurement (~6 min, it is mostly waiting
+# 4. justify the fixed configuration by measurement (~6 min, it is mostly waiting
 #    on reasoning-on generations that are the point of the probe)
 python3 attacks/probe_config.py
 
-# 4. the evaluation: 3 tasks x 3 repeats, one configuration
+# 5. the evaluation: 3 tasks x 3 repeats, one configuration
 python3 run_eval.py
 #    ...or a single run:  python3 run_eval.py e03_unavailable_dependency
 
-# 5. score the journals. No model is contacted by either of these; stop Ollama
+# 6. score the journals. No model is contacted by either of these; stop Ollama
 #    and they still run.
 python3 rescore_eval.py --scorer v1
 python3 rescore_eval.py --scorer v2
@@ -54,6 +58,8 @@ diff <(python3 -c "import json;print(json.dumps(json.load(open('proofs/results_v
 | `tasks/e0{1,2,3}_*.json` | the three tasks: behaviour, reachability contract, acceptance, and why acceptance is not the specification |
 | `tasks/manifest_eval.json` | **the manifest** — tasks, contracts, the fixed agent configuration, the scorer version, and how grading works |
 | `attacks/run_attacks.py` | every attack, executed. Writes `proofs/attack_matrix_eval.json` |
+| `attacks/test_axes.py` | 16 tests for the scorer, covering the cases no run produced |
+| `attacks/prove_no_model_calls.py` | severs the socket layer, then rescores, so "zero model calls" is proven |
 | `attacks/probe_config.py` | why the configuration is what it is. Writes `proofs/config_selection.json` |
 | `run_eval.py` | 3x3 grid. Writes each journal **before** any scorer sees it |
 | `evals/axes_eval.py` | the scorer. Four fields, two versions, both kept |
