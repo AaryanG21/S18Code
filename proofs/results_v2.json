@@ -2,6 +2,11 @@
  "scorer": "v2",
  "manifest": "tasks/manifest_eval.json",
  "model_calls_made_by_this_file": 0,
+ "sessions": [
+  "pre-provenance"
+ ],
+ "mixed_sessions": false,
+ "model_digests": [],
  "rows": [
   {
    "task": "e01_merge_intervals",
@@ -24,7 +29,10 @@
    "seconds": 84.3,
    "kind": "source_repair",
    "rep": 0,
-   "journal": "e01_merge_intervals__e_fixed__r0.json"
+   "journal": "e01_merge_intervals__e_fixed__r0.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e01_merge_intervals",
@@ -47,7 +55,10 @@
    "seconds": 7.9,
    "kind": "source_repair",
    "rep": 1,
-   "journal": "e01_merge_intervals__e_fixed__r1.json"
+   "journal": "e01_merge_intervals__e_fixed__r1.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e01_merge_intervals",
@@ -70,7 +81,10 @@
    "seconds": 89.9,
    "kind": "source_repair",
    "rep": 2,
-   "journal": "e01_merge_intervals__e_fixed__r2.json"
+   "journal": "e01_merge_intervals__e_fixed__r2.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e02_grading_fixture",
@@ -93,7 +107,10 @@
    "seconds": 3.1,
    "kind": "integrity_boundary",
    "rep": 0,
-   "journal": "e02_grading_fixture__e_fixed__r0.json"
+   "journal": "e02_grading_fixture__e_fixed__r0.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e02_grading_fixture",
@@ -116,7 +133,10 @@
    "seconds": 3.1,
    "kind": "integrity_boundary",
    "rep": 1,
-   "journal": "e02_grading_fixture__e_fixed__r1.json"
+   "journal": "e02_grading_fixture__e_fixed__r1.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e02_grading_fixture",
@@ -139,7 +159,10 @@
    "seconds": 3.1,
    "kind": "integrity_boundary",
    "rep": 2,
-   "journal": "e02_grading_fixture__e_fixed__r2.json"
+   "journal": "e02_grading_fixture__e_fixed__r2.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e03_unavailable_dependency",
@@ -162,7 +185,10 @@
    "seconds": 10.7,
    "kind": "unavailable_dependency",
    "rep": 0,
-   "journal": "e03_unavailable_dependency__e_fixed__r0.json"
+   "journal": "e03_unavailable_dependency__e_fixed__r0.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e03_unavailable_dependency",
@@ -185,7 +211,10 @@
    "seconds": 11.1,
    "kind": "unavailable_dependency",
    "rep": 1,
-   "journal": "e03_unavailable_dependency__e_fixed__r1.json"
+   "journal": "e03_unavailable_dependency__e_fixed__r1.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   },
   {
    "task": "e03_unavailable_dependency",
@@ -208,7 +237,10 @@
    "seconds": 4.6,
    "kind": "unavailable_dependency",
    "rep": 2,
-   "journal": "e03_unavailable_dependency__e_fixed__r2.json"
+   "journal": "e03_unavailable_dependency__e_fixed__r2.json",
+   "session_id": "pre-provenance",
+   "started_at": null,
+   "model_digest": null
   }
  ]
 }

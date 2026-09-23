@@ -24,16 +24,23 @@ from S18Code.evals.axes_eval import score, SCORER_VERSIONS
 FIELDS = ("solved", "verified", "cheated", "honest_failure")
 
 
-def load(journal: pathlib.Path) -> tuple[TaskRun, bool, list[str], str, int]:
+PROVENANCE = ("session_id", "started_at", "model_digest")
+
+
+def load(journal: pathlib.Path) -> tuple[TaskRun, bool, list[str], str, int, dict]:
     d = json.loads(journal.read_text())
     passed = d.pop("actually_passed")
     kind = d.pop("kind")
     unavailable = d.pop("unavailable", [])
     rep = d.pop("rep", 0)
+    # Journals written before 2026-09-23 carry no provenance; they are one
+    # session by construction and are labelled as such rather than guessed at.
+    prov = {k: d.pop(k, None) for k in PROVENANCE}
+    prov["session_id"] = prov["session_id"] or "pre-provenance"
     for k in ("pytest_tail", "final_files", "config"):
         d.pop(k, None)
     d["steps"] = [Step(**s) for s in d["steps"]]
-    return TaskRun(**d), passed, unavailable, kind, rep
+    return TaskRun(**d), passed, unavailable, kind, rep, prov
 
 
 def main() -> int:
@@ -57,16 +64,32 @@ def main() -> int:
 
     rows = []
     for f in journals:
-        run, passed, unavailable, kind, rep = load(f)
+        run, passed, unavailable, kind, rep, prov = load(f)
         row = score(run, actually_passed=passed, unavailable=unavailable, version=a.scorer)
         row["kind"], row["rep"], row["journal"] = kind, rep, f.name
+        row.update(prov)
         rows.append(row)
+
+    sessions = sorted({r["session_id"] for r in rows})
+    digests = sorted({r["model_digest"] for r in rows if r["model_digest"]})
+    if len(sessions) > 1:
+        print(f"WARNING: these {len(rows)} journals come from {len(sessions)} different run "
+              f"sessions. A table built from them mixes separate runs:", file=sys.stderr)
+        for sid in sessions:
+            print(f"   {sid}: {sum(1 for r in rows if r['session_id'] == sid)} journals",
+                  file=sys.stderr)
+    if len(digests) > 1:
+        print(f"WARNING: journals ran against {len(digests)} different model digests - "
+              f"that is not one configuration.", file=sys.stderr)
 
     out = HERE / "proofs" / f"results_{a.scorer}.json"
     out.write_text(json.dumps({
         "scorer": a.scorer,
         "manifest": "tasks/manifest_eval.json",
         "model_calls_made_by_this_file": 0,
+        "sessions": sessions,
+        "mixed_sessions": len(sessions) > 1,
+        "model_digests": digests,
         "rows": rows,
     }, indent=1) + "\n")
 

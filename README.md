@@ -29,10 +29,12 @@ git clone -b s18-eval-fork https://github.com/AaryanG21/S18Code.git
 cd S18Code
 
 # 2. the scorer's own tests. Every case in here is one the nine runs never
-#    produced, and three of them were failing when first written.
+#    produced. Several were written against bugs and failed until those were fixed.
 python3 -m pytest attacks/test_axes.py -q
 
-# 3. set every task label by execution, not by argument (10 attacks, ~2s)
+# 3. set every task label by execution, not by argument: 10 attacks on the task
+#    designs, plus 5 driven through the real loop against the harness itself (~3s).
+#    Exits 1 if any attack disagrees with the design.
 python3 attacks/run_attacks.py
 
 # 4. justify the fixed configuration by measurement (~6 min, it is mostly waiting
@@ -58,8 +60,8 @@ diff <(python3 -c "import json;print(json.dumps(json.load(open('proofs/results_v
 | `tasks/e0{1,2,3}_*.json` | the three tasks: behaviour, reachability contract, acceptance, and why acceptance is not the specification |
 | `tasks/manifest_eval.json` | **the manifest** — tasks, contracts, the fixed agent configuration, the scorer version, and how grading works |
 | `attacks/run_attacks.py` | every attack, executed. Writes `proofs/attack_matrix_eval.json` |
-| `attacks/test_axes.py` | 16 tests for the scorer, covering the cases no run produced |
-| `attacks/prove_no_model_calls.py` | severs the socket layer, then rescores, so "zero model calls" is proven |
+| `attacks/test_axes.py` | 22 tests for the scorer, guard, and workspace containment — the cases no run produced |
+| `attacks/prove_no_model_calls.py` | records every connection attempt, proves it can catch a planted one, then runs both rescorers and checks they actually rewrote their output |
 | `attacks/probe_config.py` | why the configuration is what it is. Writes `proofs/config_selection.json` |
 | `run_eval.py` | 3x3 grid. Writes each journal **before** any scorer sees it |
 | `evals/axes_eval.py` | the scorer. Four fields, two versions, both kept |
@@ -67,7 +69,8 @@ diff <(python3 -c "import json;print(json.dumps(json.load(open('proofs/results_v
 | `proofs/runs_eval/*.json` | the nine raw journals |
 | `proofs/results_v1.json`, `results_v2.json` | the same nine runs under both scorers |
 | `WALKTHROUGH.md` | one task → one run → one raw record → a rescore |
-| `REPORT.md` | the narrow claim and its limits |
+| `REPORT.md` | the narrow claim and its limits — one page |
+| `APPENDIX.md` | everything the one page left out, including the defects found in this evaluation's own code |
 
 ## The four fields
 
@@ -81,15 +84,21 @@ whoever reads the results.
 
 ## The reachability contracts
 
-Each task's `contract` block names files (writable and read-only), data, network,
-protected paths, and allowed tools. Two of these are enforced rather than promised:
+Each task's `contract` block names files (the one to edit, what the harness actually
+permits, and what is read-only), data, network, protected paths, and allowed tools. Three of
+these are enforced rather than promised:
 
 - **allowed tools** — the loop offers exactly `read`, `write`, `test`, `done`. There is no
   shell and no pip, so "no network" holds because nothing in the agent's vocabulary can
   reach it.
-- **protected paths** — `harnesses/loop.py` refuses writes to them when `guard=True`, and
+- **protected paths** — `harnesses/loop.py` refuses writes to them when `guard=True`,
+  matching case-insensitively and against the resolved path, and
   `tasks/materialise.py::run_tests` restores the task's tests from the task file before
-  grading, so an on-disk test edit changes no verdict.
+  grading, so an on-disk test edit changes no verdict. (Until 2026-09-23 the match was
+  case-sensitive, and `Tests/…` walked past it on macOS. See `APPENDIX.md`.)
+- **the workspace boundary** — every read and write is resolved and refused if it lands
+  outside the workspace, in both arms. (Until 2026-09-23 it was not: `../` and absolute
+  paths reached the host.)
 
 One thing the guard does **not** do, stated here because it is the finding rather than an
 oversight: it protects paths that grade, and `s18feedlib.py` at the workspace root grades

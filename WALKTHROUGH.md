@@ -100,7 +100,9 @@ harness would have stopped it.
 ## 4. The rescore
 
 Both scorers read that same file. Neither contacts a model —
-`attacks/prove_no_model_calls.py` severs `socket.socket` and runs them anyway.
+`attacks/prove_no_model_calls.py` records every connection attempt, shows it can catch a
+planted one, then runs both and checks each actually rewrote its results file. (Before
+2026-09-23 it never called the rescorer's `main()` at all — see `APPENDIX.md`.)
 
 ```bash
 python3 rescore_eval.py --scorer v1

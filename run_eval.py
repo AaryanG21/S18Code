@@ -11,7 +11,7 @@ GPU. With the journal on disk first, a scorer change costs one rescore.
 """
 from __future__ import annotations
 
-import asyncio, dataclasses, json, pathlib, sys, time, urllib.request
+import asyncio, dataclasses, datetime, json, pathlib, shutil, sys, time, urllib.request, uuid
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
@@ -54,6 +54,16 @@ def make_llm(usage: dict):
     return llm
 
 
+def local_digest() -> str | None:
+    """The digest Ollama will actually serve for the manifest's model tag."""
+    tags = CFG["endpoint"].rsplit("/api/", 1)[0] + "/api/tags"
+    with urllib.request.urlopen(tags, timeout=10) as r:
+        for m in json.load(r).get("models", []):
+            if m.get("name") == CFG["model"]:
+                return m.get("digest")
+    return None
+
+
 def snapshot(ws: pathlib.Path) -> dict:
     """Every file in the workspace at the end, not just *.py at the root.
 
@@ -85,6 +95,24 @@ async def main() -> int:
     raw_dir = HERE / "proofs" / "runs_eval"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
+    # The manifest pins a digest, not just a tag. Refuse to run anything else
+    # under its name: a re-tagged `latest` would otherwise produce journals
+    # that claim this configuration and are not from it.
+    digest = local_digest()
+    if digest != CFG["model_digest"]:
+        print(f"error: {CFG['model']} is {digest or 'not installed'} locally;", file=sys.stderr)
+        print(f"       the manifest pins {CFG['model_digest']}", file=sys.stderr)
+        return 2
+
+    # Every journal written by this invocation carries one session id. Without
+    # it, `run_eval.py e03_...` - the single-task form the README advertises -
+    # overwrote e03's journals and left e01/e02's from an earlier session, and
+    # the rescorer blended the two sets without a word.
+    session = {"session_id": uuid.uuid4().hex[:12],
+               "started_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+               "model_digest": digest}
+    print(f"  session {session['session_id']}  model {CFG['model']} @ {digest[:12]}")
+
     cfg = Config(CFG["arm_name"], guard=CFG["guard"], ceiling=CFG["ceiling"],
                  max_steps=CFG["max_steps"])
     n, total = 0, len(order) * reps
@@ -100,6 +128,7 @@ async def main() -> int:
                 run = await run_loop(t, ws, cfg, make_llm(usage), CFG["model"])
             except Exception as e:
                 print(f"  [{n}/{total}] {tid} ABORTED {type(e).__name__}: {e}", flush=True)
+                shutil.rmtree(ws, ignore_errors=True)
                 continue
             run.prompt_tokens, run.output_tokens = usage["prompt"], usage["output"]
             passed, tail = run_tests(ws, t)
@@ -111,10 +140,15 @@ async def main() -> int:
                        "kind": t["kind"],
                        "unavailable": t.get("contract", {}).get("unavailable", []),
                        "rep": rep,
+                       **session,
                        "config": CFG,
                        "final_files": snapshot(ws)}
             (raw_dir / f"{tid}__{cfg.name}__r{rep}.json").write_text(
                 json.dumps(journal, indent=1) + "\n")
+            # The snapshot is in the journal; the workspace has nothing left to
+            # say. Upstream never removed these - 97 had accumulated in the
+            # temp dir by 2026-09-23, each holding model-written code.
+            shutil.rmtree(ws, ignore_errors=True)
 
             print(f"  [{n}/{total}] {tid:28s} r{rep} green={passed!s:5s} "
                   f"claimed={run.claimed_success!s:5s} ended={run.ended:9s} "
